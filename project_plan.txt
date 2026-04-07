@@ -1,0 +1,565 @@
+================================================================================
+               DECAMP — AI-POWERED GMAIL & CALENDAR ASSISTANT
+                         Comprehensive Project Plan
+                         Version 1.0 | March 2026
+================================================================================
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  SECTION 1: PROJECT OVERVIEW
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Project Name   : Decamp
+Tagline        : Your AI-powered email chief of staff
+Framework      : Python (FastAPI) + Next.js (React)
+AI Engine      : Google Gemini 2.0 Flash
+APIs           : Gmail API, Google Calendar API
+Auth           : Google OAuth 2.0
+Database       : SQLite (Async/SQLAlchemy) / PostgreSQL
+
+
+WHAT IS DECAMP?
+---------------
+Decamp is a comprehensive AI-powered personal assistant web application that
+integrates directly with the user's Gmail and Google Calendar. It leverages
+Google's Gemini AI model to:
+
+  1. Retrieve and analyze emails from the user's Gmail inbox
+  2. Prioritize emails into three urgency tiers:
+       - IMMEDIATE ATTENTION (critical, time-sensitive)
+       - NEEDS RESPONSE (important but not urgent)
+       - CAN WAIT (newsletters, low-priority)
+  3. Summarize long email threads into concise bullet points
+  4. Group emails by category (work, personal, finance, meetings, forms, etc.)
+  5. Detect meeting invitations and add them to Google Calendar
+  6. Remind users of upcoming meetings (today's agenda)
+  7. Provide an AI chatbot agent for email-related queries and actions
+  8. Waitlist management with specialized landing page and admin dashboard
+
+
+PROBLEM IT SOLVES
+-----------------
+Professionals receive 100+ emails per day. Most email clients present all
+emails as equally important, causing:
+
+  - Important tasks to be missed or delayed
+  - Meeting invites to be buried and forgotten
+  - Hours wasted reading low-priority emails
+  - Cognitive overload from inbox noise
+
+Decamp acts as an intelligent layer on top of Gmail, surfacing what matters
+most, scheduling meetings automatically, and allowing users to chat with an
+AI agent that can answer questions about their emails.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  SECTION 2: KEY FEATURES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+FEATURE 1 — GMAIL INTEGRATION
+  ✦ Sign in with Google (OAuth 2.0), granting Gmail read access
+  ✦ Fetch latest N emails from the inbox (configurable; default 30)
+  ✦ section to fetch emails exactly as they appear in Gmail
+  ✦ Retrieve full email body (plain text + HTML)
+  ✦ Support email attachments metadata display (name + size)
+  ✦ Refresh token handling for persistent sessions
+
+FEATURE 2 — AI PRIORITIZATION (Gemini AI)
+  ✦ Each email is analyzed by Gemini and assigned:
+       Priority Level      : high | medium | low
+       Urgency Tier        : "Immediate Attention" | "Needs Response" | "Can Wait"
+       Needs Response      : boolean (does the user need to reply?)
+       Deadline Detected   : date/time string or null
+       Category            : work | finance | personal | meeting | form | newsletter | other
+       Summary             : 2-3 sentence plain-English summary
+       Action Items        : bulleted list of things the user needs to do
+       Sentiment           : positive | neutral | negative | urgent
+       Meeting Detected    : boolean
+       Meeting Details     : {title, date, time, duration_minutes, location}
+       Form Detected       : boolean (contract, survey, sign-up required)
+       Waiting On          : boolean (user is waiting for a response)
+
+FEATURE 3 — EMAIL SUMMARIZATION & GROUPING
+  ✦ Dashboard displays emails grouped by category tabs:
+       All | Immediate | Meetings | Forms | Waiting | Low Priority
+  ✦ Each email card shows: sender, subject, AI summary (2 lines), priority badge
+  ✦ Clicking an email opens a reading pane with full AI analysis
+  ✦ Thread summarization: for multi-email threads, one combined summary
+  ✦ Search bar: full-text search across synced emails
+
+FEATURE 4 — GOOGLE CALENDAR INTEGRATION
+  ✦ When a meeting is detected in an email, a one-click "Add to Calendar" button
+    appears in the reading pane
+  ✦ Before adding: check for conflicts using Google Calendar's freebusy API
+  ✦ If no conflict: create the event and return a link to Google Calendar
+  ✦ If conflict: show a modal listing the conflicting event and ask user to
+    choose a new time
+  ✦ Today's Agenda panel: right sidebar shows all calendar events for today,
+    fetched live from Google Calendar
+  ✦ Upcoming meetings reminder: a prominent banner shows the next meeting within
+    the next 60 minutes ("You have a meeting in 15 min: Team Standup")
+
+FEATURE 5 — MEETING REMINDERS
+  ✦ On app load, check if any calendar event starts within 60 minutes
+  ✦ Display a persistent reminder banner at the top of the dashboard
+  ✦ In-app notifications (browser Notification API) when a meeting is 5 min away
+  ✦ The chatbot can also be queried: "What meetings do I have today?"
+
+FEATURE 6 — AI CHATBOT AGENT
+  ✦ A floating chat widget (bottom-right corner) powered by Gemini AI
+  ✦ The chatbot is given full context of the user's synced emails and today's
+    calendar events as a system prompt
+  ✦ Capabilities:
+       - "Summarize my emails from John"
+       - "What are my action items today?"
+       - "Do I have any meetings tomorrow?"
+       - "Which emails need urgent attention?"
+       - "Which emails can I ignore for now?"
+       - "Schedule a meeting with Dr. Asante on Friday at 2 PM"
+       - "Draft a reply to [sender]" (returns AI-generated draft)
+  ✦ Conversation history is maintained per session
+  ✦ Chatbot responses stream in real-time (SSE)
+
+FEATURE 7 — WAITLIST & ADMIN DASHBOARD
+  ✦ High-conversion landing page with glassmorphism waitlist form
+  ✦ Dedicated Admin Dashboard for data-driven management
+  ✦ Features: CSV export, bulk delete, status updates, analytics charts
+  ✦ Secure access via admin-specific role checks
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  SECTION 3: SYSTEM ARCHITECTURE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                        USER'S BROWSER                               │
+│                                                                     │
+│  ┌──────────────────────────────────────────────────────────────┐  │
+│  │               DECAMP WEB FRONTEND                            │  │
+│  │  (Next.js — premium glassmorphism UI with Tailwind v4)      │  │
+│  │                                                              │  │
+│  │  ┌──────────────┐  ┌──────────────┐  ┌────────────────────┐ │  │
+│  │  │  Email List  │  │ Reading Pane │  │  Right Sidebar     │ │  │
+│  │  │  (by tiers)  │  │ + AI Summary │  │  Waitlist / Stats  │ │  │
+│  │  │  Categories  │  │ Action Items │  │  Today's Calendar  │ │  │
+│  │  │  Filter Tabs │  │ Add To Cal   │  │  Meeting Reminder  │ │  │
+│  │  └──────────────┘  └──────────────┘  └────────────────────┘ │  │
+│  │                                                              │  │
+│  │  ┌──────────────────────┐        ┌─────────────────────┐      │  │
+│  │  │   AI CHATBOT WIDGET  │        │   ADMIN DASHBOARD   │      │  │
+│  │  │  (floating widget)   │        │  (Waitlist Mgmt)    │      │  │
+│  │  └──────────────────────┘        └─────────────────────┘      │  │
+│  └──────────────────────────────────────────────────────────────┘  │
+└───────────────────────────┬─────────────────────────────────────────┘
+                            │  REST API (JSON) + SSE (streaming chat)
+                            ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                      FASTAPI BACKEND                                │
+│                                                                     │
+│  main.py           — App init, middleware, static files, routes     │
+│  auth.py           — Google OAuth 2.0 (Authlib), token management  │
+│  database.py       — SQLAlchemy engine + Session factory           │
+│  models.py         — DB models: User, Email, ChatMessage           │
+│                                                                     │
+│  ┌───────────────┐ ┌──────────────────┐ ┌─────────────────────┐   │
+│  │ gmail_service │ │ calendar_service │ │   gemini_service    │   │
+│  │  (Gmail API)  │ │ (Calendar API)   │ │  (Gemini AI model)  │   │
+│  └───────────────┘ └──────────────────┘ └─────────────────────┘   │
+│                                                                     │
+│  ROUTERS (modular domain-based structure):                   │
+│   src/domain/auth             — Google OAuth 2.0 flow       │
+│   src/domain/emails           — Sync, list, prioritize      │
+│   src/domain/calendar         — Events, add event, reminders│
+│   src/domain/chatbot          — SSE stream, chat history     │
+│   src/domain/waitlist         — Waitlist entry & Admin CRUD │
+└───────────┬──────────────────┬──────────────────┬───────────────────┘
+            │                  │                  │
+     ┌──────▼───────┐  ┌───────▼──────┐  ┌───────▼──────┐
+     │   GMAIL API  │  │  CALENDAR    │  │  GEMINI AI   │
+     │  (Google)    │  │  API (Google)│  │   (Google)   │
+     └──────────────┘  └──────────────┘  └──────────────┘
+            │
+     ┌──────▼──────────────┐
+     │  SQLite / Postgres  │
+     │  (decamp.db)        │
+     │  Users, Emails,     │
+     │  Chat History       │
+     └─────────────────────┘
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  SECTION 4: PROJECT FILE STRUCTURE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Decamp/
+├── main.py                    # FastAPI app entry point
+├── auth.py                    # Google OAuth 2.0 config + token helpers
+├── database.py                # SQLAlchemy engine + session
+├── models.py                  # ORM models: User, Email, ChatMessage
+├── gmail_service.py           # Gmail API wrapper (fetch, parse, strip HTML)
+├── calendar_service.py        # Google Calendar API wrapper
+├── gemini_service.py          # Gemini AI: analyze emails, chatbot, summarize
+├── ai_engine.py               # High-level orchestration (email sync pipeline)
+├── .env                       # Environment variables (API keys, secrets)
+├── requirements.txt           # Python dependencies
+├── decamp.db                  # SQLite database (auto-created)
+├── README.md                  # Setup + run instructions
+│
+├── routers/
+│   ├── __init__.py
+│   ├── emails.py              # Email endpoints: sync, list, read, prioritize
+│   ├── calendar.py            # Calendar: today's events, add event, conflicts
+│   ├── chatbot.py             # AI chatbot: send message, SSE stream response
+│   └── activity.py            # Stats: emails processed, categories, streaks
+│
+├── templates/
+│   ├── index.html             # Main dashboard (the big one)
+│   └── login.html             # Google sign-in landing page
+│
+└── static/
+    ├── css/
+    │   ├── main.css           # Global design system (dark mode, glassmorphism)
+    │   └── chat.css           # Chatbot widget specific styles
+    └── js/
+        ├── dashboard.js       # Dashboard logic: email load, filtering, tabs
+        ├── emailReader.js     # Reading pane: load email, show AI analysis
+        ├── calendar.js        # Calendar sidebar + add-to-cal flow
+        ├── reminders.js       # Meeting reminder banner + browser notifications
+        └── chatbot.js         # Chat widget: send messages, stream responses
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  SECTION 5: DATABASE SCHEMA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+TABLE: users
+  id                  INTEGER PRIMARY KEY
+  google_id           VARCHAR(128) UNIQUE
+  email               VARCHAR(256)
+  name                VARCHAR(256)
+  picture_url         VARCHAR(512)
+  access_token        TEXT
+  refresh_token       TEXT
+  token_expiry        DATETIME
+  created_at          DATETIME
+
+TABLE: emails
+  id                  INTEGER PRIMARY KEY
+  user_id             INTEGER (FK → users.id)
+  gmail_id            VARCHAR(128) UNIQUE
+  thread_id           VARCHAR(128)
+  sender              VARCHAR(256)
+  sender_email        VARCHAR(256)
+  subject             VARCHAR(512)
+  snippet             TEXT
+  body                TEXT            (plain text)
+  body_html           TEXT            (raw HTML)
+  received_at         DATETIME
+  -- AI fields --
+  priority            VARCHAR(20)     (high | medium | low)
+  urgency_tier        VARCHAR(50)     (Immediate | Needs Response | Can Wait)
+  needs_response      BOOLEAN
+  summary             TEXT
+  action_items        TEXT            (JSON array of strings)
+  category            VARCHAR(50)
+  sentiment           VARCHAR(20)
+  deadline_detected   VARCHAR(100)
+  meeting_detected    BOOLEAN
+  meeting_title       VARCHAR(256)
+  meeting_date        VARCHAR(50)
+  meeting_time        VARCHAR(50)
+  meeting_duration    INTEGER         (minutes)
+  meeting_location    VARCHAR(256)
+  form_detected       BOOLEAN
+  form_description    TEXT
+  waiting_on          BOOLEAN
+  calendar_event_id   VARCHAR(256)    (Google Calendar event ID, if scheduled)
+  synced_at           DATETIME
+
+TABLE: waitlist_entries
+  id                  INTEGER PRIMARY KEY
+  email               VARCHAR(256) UNIQUE
+  name                VARCHAR(256)
+  role                VARCHAR(100)
+  use_case            TEXT
+  status              VARCHAR(50)     (pending | invited | accepted)
+  created_at          DATETIME
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  SECTION 6: API ENDPOINTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+AUTH
+  GET  /login                       → Redirect to Google OAuth
+  GET  /auth/callback               → OAuth callback, save tokens, redirect to /
+  GET  /logout                      → Clear session, redirect to /login
+
+FRONTEND PAGES
+  GET  /                            → Serve dashboard (index.html)
+  GET  /login_page                  → Serve login page (login.html)
+
+EMAIL API
+  POST /api/emails/sync             → Trigger Gmail sync (fetches + analyzes)
+  GET  /api/emails                  → List all synced emails (with filters)
+       ?category=meeting            → Filter by category
+       ?tier=immediate              → Filter by urgency tier
+       ?search=keyword              → Full-text search
+       ?limit=30&offset=0          → Pagination
+  GET  /api/emails/{id}             → Get single email full details
+  GET  /api/emails/stats            → Dashboard stats (counts per tier/category)
+
+CALENDAR API
+  GET  /api/calendar/today          → Get today's Google Calendar events
+  GET  /api/calendar/upcoming       → Get events in next 60 minutes (reminders)
+  POST /api/calendar/add            → Add event; check conflicts first
+       Body: {email_id, title, date, time, duration, description}
+  GET  /api/calendar/conflicts      → Check if a time slot is free
+       ?date=2026-03-15&time=14:00&duration=60
+
+CHATBOT API
+  POST /api/chat                    → Send a chat message
+       Body: {message, session_id}
+       Returns: streaming SSE response (text/event-stream)
+  GET  /api/chat/history            → Get conversation history for session
+       ?session_id=abc123
+
+WAITLIST & ADMIN API
+  POST /api/waitlist                → Submit waitlist form
+  GET  /api/admin/waitlist          → List all entries (Admin only)
+  PATCH/DELETE /api/admin/waitlist  → Update or remove entries
+  GET  /api/admin/stats             → Waitlist analytics (signups over time)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  SECTION 7: AI PROMPT DESIGN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+EMAIL ANALYSIS PROMPT (sent to Gemini per email)
+-------------------------------------------------
+You are an AI email analyst for a busy professional.
+Analyze the following email and respond ONLY with valid JSON.
+
+Email:
+  From: {sender}
+  Subject: {subject}
+  Date: {date}
+  Body: {body_text}
+
+Return a JSON object with EXACTLY these fields:
+{
+  "priority": "high" | "medium" | "low",
+  "urgency_tier": "Immediate Attention" | "Needs Response" | "Can Wait",
+  "needs_response": true | false,
+  "summary": "2-3 sentence plain-English summary",
+  "action_items": ["item 1", "item 2"],
+  "category": "work" | "finance" | "personal" | "meeting" | "form" |
+               "newsletter" | "notification" | "other",
+  "sentiment": "positive" | "neutral" | "negative" | "urgent",
+  "deadline_detected": "YYYY-MM-DD HH:MM" | null,
+  "meeting_detected": true | false,
+  "meeting": {
+    "title": "...",
+    "date": "YYYY-MM-DD" | null,
+    "time": "HH:MM" | null,
+    "duration_minutes": 30,
+    "location": "..." | null
+  },
+  "form_detected": true | false,
+  "form_description": "..." | null,
+  "waiting_on": true | false
+}
+
+
+CHATBOT SYSTEM PROMPT
+---------------------
+You are Decamp, an AI email and calendar assistant for {user_name}.
+Today is {today_date}. Current time: {current_time}.
+
+You have access to the following context:
+- {email_count} emails from the last 7 days
+- Today's calendar: {calendar_events_json}
+- Email summaries: {email_summaries_json}
+
+Your capabilities:
+1. Answer questions about the user's emails
+2. Summarize specific email threads
+3. List action items and deadlines
+4. Tell the user about their schedule
+5. Help draft reply templates
+6. Schedule meetings (call the /api/calendar/add endpoint)
+
+Always be concise, professional, and helpful. Reply in plain language.
+If you cannot find information in the provided context, say so clearly.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  SECTION 8: UI/UX DESIGN SPEC
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+DESIGN PHILOSOPHY
+  Premium dark-mode glassmorphism with subtle animations.
+  Every element should feel alive and intelligent.
+
+COLOR PALETTE
+  Background         : #0d0f1a  (deep navy)
+  Surface (cards)    : rgba(255,255,255,0.05) with blur
+  Primary Accent     : #6c63ff  (electric purple)
+  High Priority      : #ff4757  (vivid red)
+  Medium Priority    : #ffa502  (amber)
+  Low Priority       : #2ed573  (mint green)
+  Meeting            : #1e90ff  (dodger blue)
+  Text Primary       : #ffffff
+  Text Secondary     : #a0a0c0
+  Border             : rgba(255,255,255,0.1)
+
+TYPOGRAPHY
+  Font Family        : 'Inter' (Google Fonts)
+  Heading            : 700 weight, 1.5rem+
+  Body               : 400 weight, 0.95rem
+  Labels/badges      : 600 weight, 0.75rem uppercase
+
+LAYOUT
+  3-column grid:
+    Left column (300px)  : Sidebar — Logo, user avatar, nav menu, stats
+    Center column (flex) : Email list → Reading pane (toggle)
+    Right column (320px) : Today's calendar, meeting reminders, activity
+
+ANIMATIONS
+  - Email cards fade-in with stagger on load (0.05s delay each)
+  - Priority badges pulse for "Immediate Attention" emails
+  - Chat messages slide in from bottom
+  - Loading skeleton placeholders for email fetch
+  - Meeting reminder banner slides down from top
+  - Add to Calendar button has a checkmark success animation
+
+RESPONSIVE
+  - Tablet (768px): collapse right sidebar into dropdown
+  - Mobile (480px): single column, bottom nav tabs
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  SECTION 9: ENVIRONMENT SETUP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Required environment variables (.env):
+  GOOGLE_CLIENT_ID         = <from Google Cloud Console>
+  GOOGLE_CLIENT_SECRET     = <from Google Cloud Console>
+  GOOGLE_REDIRECT_URI      = http://localhost:8000/auth/callback
+  GEMINI_API_KEY           = <from Google AI Studio>
+  SECRET_KEY               = <random 32-char secret for sessions>
+  DATABASE_URL             = sqlite:///./decamp.db
+
+Google OAuth Scopes required:
+  - openid
+  - email
+  - profile
+  - https://www.googleapis.com/auth/gmail.readonly
+  - https://www.googleapis.com/auth/calendar
+
+Python Dependencies (requirements.txt):
+  fastapi
+  uvicorn[standard]
+  authlib
+  httpx
+  google-api-python-client
+  google-auth-oauthlib
+  google-auth-httplib2
+  sqlalchemy
+  python-dotenv
+  jinja2
+  python-multipart
+  google-generativeai
+  beautifulsoup4
+  psycopg2-binary         (for PostgreSQL on Render)
+
+Run locally:
+  cd Decamp
+  pip install -r requirements.txt
+  uvicorn main:app --reload --port 8000
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  SECTION 10: IMPLEMENTATION PHASES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PHASE 1 — Foundation (Backend Core)
+  [x] Set up FastAPI app (domain-based)
+  [x] Configure Google OAuth 2.0
+  [x] Set up SQLAlchemy models (Async)
+  [x] Gmail service: fetch + parse emails
+  [x] Gemini AI service: analyze single email
+  [x] AI engine: orchestrate email sync pipeline
+  [x] Email router: /api/emails/sync, /api/emails
+
+PHASE 2 — Next.js Migration & Waitlist
+  [x] Create Next.js project structure
+  [x] Implement Waitlist landing page
+  [x] Backend Waitlist API
+  [x] Connect Waitlist form to backend
+
+PHASE 3 — Admin Dashboard
+  [x] Build Admin management page
+  [x] Implement Waitlist CRUD (Delete, Update)
+  [x] Add CSV Export
+  [x] Add Analytics Charts (Recharts)
+
+PHASE 4 — AI & Inbox Core
+  [x] Email list with priority tiers
+  [x] AI Reading pane
+  [x] SSE Chatbot implementation
+  [x] Real-time Calendar integration
+
+PHASE 5 — Polish & Verification
+  [22] Error handling, empty states, loading skeletons
+  [23] Browser notifications for meeting reminders
+  [24] End-to-end testing (login → sync → chat → calendar)
+  [25] README.md with setup instructions
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  SECTION 11: KNOWN RISKS & MITIGATIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+RISK 1: Gmail API rate limits
+  Mitigation: Sync max 30 emails per trigger, cache in DB for 5 min,
+              do not re-analyze already-synced emails
+
+RISK 2: Gemini API latency (slow for 30 emails)
+  Mitigation: Analyze emails in parallel using asyncio.gather()
+              Show skeleton cards immediately, fill in with AI data as ready
+
+RISK 3: Google OAuth token expiry
+  Mitigation: Store refresh_token in DB, auto-refresh before every API call
+
+RISK 4: Large email bodies breaking Gemini context
+  Mitigation: Truncate body to 4,000 characters before sending to Gemini
+              Strip HTML, remove tracking links using BeautifulSoup
+
+RISK 5: Production OAuth policy (requires HTTPS)
+  Mitigation: Use Render.com for deployment (HTTPS automatic),
+              update GOOGLE_REDIRECT_URI to Render domain
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  SECTION 12: SUCCESS CRITERIA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+The project is considered complete when:
+
+  ✅ User can sign in with Google and see their Gmail emails prioritized
+  ✅ Emails are grouped into Immediate / Needs Response / Can Wait tiers
+  ✅ Each email shows a 2-3 sentence AI summary and action items
+  ✅ Meeting emails have a working "Add to Calendar" button
+  ✅ Today's calendar agenda appears in the right sidebar
+  ✅ A meeting reminder banner appears when a meeting is <60 min away
+  ✅ The AI chatbot responds to natural-language queries about emails
+  ✅ Chatbot can answer: "What meetings do I have today?"
+  ✅ Chatbot responses stream in real-time (no waiting for full response)
+  ✅ UI is visually premium (dark mode, glassmorphism, smooth animations)
+  ✅ App is deployable to Render.com
+
+
+================================================================================
+  END OF PROJECT PLAN
+  Ready for implementation upon review.
+================================================================================

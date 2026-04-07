@@ -1,0 +1,39 @@
+services:
+  web:
+    image: ghcr.io/${GITHUB_USER_LOWER}/${REPO_NAME_LOWER}-web:latest
+    container_name: ${APP_NAME}_web
+    restart: always
+    depends_on:
+      backend:
+        condition: service_started
+    environment:
+      - NEXT_PUBLIC_API_URL=https://${API_DOMAIN}
+    networks:
+      - app_network
+      - caddy_net
+    labels:
+      caddy: ${APP_DOMAIN}
+      caddy.reverse_proxy: "{{upstreams 3000}}"
+
+  backend:
+    image: ghcr.io/${GITHUB_USER_LOWER}/${REPO_NAME_LOWER}-backend:latest
+    container_name: ${APP_NAME}_backend
+    restart: always
+    env_file:
+      - .env
+    # No command override needed — the Dockerfile CMD handles both migrations and server startup.
+    networks:
+      - app_network
+      - caddy_net
+    labels:
+      caddy: ${API_DOMAIN}
+      caddy.reverse_proxy: "{{upstreams 8000}}"
+
+networks:
+  app_network:
+    driver: bridge
+  caddy_net:
+    external: true
+
+volumes:
+  postgres_data:

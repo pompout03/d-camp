@@ -1,0 +1,98 @@
+name: Deploy to DigitalOcean
+
+on:
+  workflow_run:
+    workflows: ["Build and Push Web Image", "Build and Push Backend Image"]
+    types:
+      - completed
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # We need lowercase strings for Docker image names
+      - name: Set lowercase variables
+        run: |
+          echo "GITHUB_USER_LOWER=${GITHUB_ACTOR,,}" >>${GITHUB_ENV}
+          REPO_NAME=${GITHUB_REPOSITORY#*/}
+          echo "REPO_NAME_LOWER=${REPO_NAME,,}" >>${GITHUB_ENV}
+
+      # MAGIC STEP: Generates a standard text file containing ALL your secrets
+      # This pulls from the bulk secret ENV_CONTENTS plus individual secrets/vars.
+      - name: Generate Environment File
+        env:
+          ENV_CONTENTS: ${{ secrets.ENV_CONTENTS }}
+          SECRETS_JSON: ${{ toJson(secrets) }}
+          VARS_JSON: ${{ toJson(vars) }}
+        run: |
+          # 1. Start with the Bulk Contents (Your pasted .env file)
+          echo "$ENV_CONTENTS" > server_env.txt
+          
+          # 2. Append Infrastructure Secrets (skipping internal GitHub tokens and the bulk secret itself)
+          echo "$SECRETS_JSON" | jq -r 'to_entries[] | select(.key != "DO_SSH_KEY" and .key != "GHCR_PAT" and .key != "github_token" and .key != "ENV_CONTENTS") | "\(.key)=\(.value)"' >> server_env.txt
+          
+          # 3. Append UI Variables from the Variables tab
+          echo "$VARS_JSON" | jq -r 'to_entries[] | "\(.key)=\(.value)"' >> server_env.txt
+          
+          # 4. Force the dynamic GitHub metadata into the file
+          echo "GITHUB_USER_LOWER=${{ env.GITHUB_USER_LOWER }}" >> server_env.txt
+          echo "REPO_NAME_LOWER=${{ env.REPO_NAME_LOWER }}" >> server_env.txt
+
+      # Make sure the app directory exists on the server BEFORE copying files
+      - name: Prepare Server Directory
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DO_HOST }}
+          username: ${{ vars.DO_USERNAME }}
+          key: ${{ secrets.DO_SSH_KEY }}
+          script: |
+            sudo mkdir -p /opt/apps/${{ vars.APP_NAME }}
+            sudo chown -R $USER:$USER /opt/apps/${{ vars.APP_NAME }}
+
+      # Copy deployment files via SCP (using server_env.txt to avoid hidden file issues)
+      - name: Copy deployment files via SCP
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DO_HOST }}
+          username: ${{ vars.DO_USERNAME }}
+          key: ${{ secrets.DO_SSH_KEY }}
+          source: "docker-compose.prod.yml,server_env.txt"
+          target: "/opt/apps/${{ vars.APP_NAME }}"
+
+      # Execute deployment commands via SSH
+      - name: Execute deployment commands via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          GHCR_PAT: ${{ secrets.GHCR_PAT }}
+          # Get the branch name
+          BRANCH_NAME: ${{ github.event.workflow_run.head_branch }}
+        with:
+          host: ${{ secrets.DO_HOST }}
+          username: ${{ vars.DO_USERNAME }}
+          key: ${{ secrets.DO_SSH_KEY }}
+          envs: GHCR_PAT, BRANCH_NAME
+          script: |
+          
+            echo "Deploying to Production"
+            cd /opt/apps/${{ vars.APP_NAME }}
+
+            # Convert the text file to the hidden .env file Docker expects
+            sudo mv server_env.txt .env
+
+            # 1. Login to GitHub Container Registry
+            echo "$GHCR_PAT" | sudo docker login ghcr.io -u "${{ env.GITHUB_USER_LOWER }}" --password-stdin
+
+            # 2. Pull the latest images
+            sudo docker compose -f docker-compose.prod.yml pull
+
+            # 3. Restart the containers with the new images
+            sudo docker compose -f docker-compose.prod.yml up -d --remove-orphans
+
+            # 4. Clean up unused images
+            sudo docker image prune -f

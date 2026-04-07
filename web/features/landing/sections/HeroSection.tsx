@@ -8,6 +8,7 @@ import {
   Shield,
   Clock,
 } from "lucide-react";
+import Link from "next/link";
 import AnimatedHeading from "../components/AnimatedHeading";
 
 const floatingEmails = [
@@ -158,8 +159,16 @@ export default function HeroSection() {
           Currently in beta.
         </p>
 
-        {/* Waitlist CTA removed as per user request */}
-        <div style={{ textAlign: "center", marginBottom: 48 }}>
+        {/* Waitlist CTA re-added to lead to dedicated page */}
+        <div style={{ display: "flex", gap: 16, justifyContent: "center", marginBottom: 48, flexWrap: "wrap" }}>
+          <Link
+            href="/waitlist"
+            className="btn-primary"
+            style={{ fontSize: "1rem", padding: "14px 26px" }}
+          >
+            <Sparkles size={16} />
+            Join the Waitlist
+          </Link>
           <a
             href="#how-it-works"
             className="btn-secondary"

@@ -104,14 +104,14 @@ export default function Navbar() {
           >
             Sign In
           </a>
-          <a
-            href={`${process.env.NEXT_PUBLIC_API_URL || "https://decamp-m.onrender.com"}/auth/login`}
+          <Link
+            href="/waitlist"
             className="btn-primary"
             style={{ padding: "9px 18px", fontSize: "0.8rem" }}
           >
             <span className="hide-mobile">Get Started Free</span>
             <span className="show-mobile">Join Beta</span>
-          </a>
+          </Link>
           {/* Mobile hamburger & Menu */}
           <NavbarMobile navLinks={navLinks} menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
         </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { Sparkles } from "lucide-react";
+import Link from "next/link";
 import AnimatedHeading from "../components/AnimatedHeading";
 
 export default function CTABannerSection() {
@@ -80,7 +81,16 @@ export default function CTABannerSection() {
             product. Free to join. No commitment.
           </p>
 
-          {/* Waitlist CTA removed as per user request */}
+          {/* Waitlist CTA re-added to lead to dedicated page */}
+          <div style={{ display: "flex", gap: 16, justifyContent: "center", marginTop: 12, position: "relative", zIndex: 2 }}>
+            <Link
+              href="/waitlist"
+              className="btn-primary"
+              style={{ fontSize: "1.1rem", padding: "16px 32px" }}
+            >
+              Join the Waitlist Today
+            </Link>
+          </div>
 
           {/* Decorative email cards */}
           {[

@@ -7,6 +7,8 @@ import TestimonialsSection from "@/features/landing/sections/TestimonialsSection
 import PricingSection from "@/features/landing/sections/PricingSection";
 import FAQSection from "@/features/landing/sections/FAQSection";
 import CTABannerSection from "@/features/landing/sections/CTABannerSection";
+import WaitlistModal from "@/features/landing/components/WaitlistModal";
+import WaitlistWidget from "@/components/WaitlistWidget";
 
 export default function Home() {
   return (
@@ -21,7 +23,10 @@ export default function Home() {
         <FAQSection />
         <CTABannerSection />
       </main>
+      <WaitlistModal />
+      <WaitlistWidget />
       <Footer />
     </>
   );
 }
+

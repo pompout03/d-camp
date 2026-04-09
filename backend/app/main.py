@@ -32,7 +32,8 @@ app = FastAPI(
 )
 
 # Set security flags based on environment
-is_local = settings.APP_DOMAIN == "localhost"
+# We are local if APP_DOMAIN is localhost or if it's not set
+is_local = settings.APP_DOMAIN == "localhost" or not settings.APP_DOMAIN
 
 # Add Session Middleware for OAuth state and internal auth
 app.add_middleware(
@@ -40,6 +41,7 @@ app.add_middleware(
     secret_key=settings.SECRET_KEY,
     session_cookie="decamp_session",
     max_age=14 * 24 * 60 * 60,  # 14 days
+    # In production (cross-site), we MUST use same_site="none" and https_only=True
     same_site="lax" if is_local else "none",
     https_only=not is_local,
 )

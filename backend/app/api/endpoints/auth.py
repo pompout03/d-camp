@@ -6,10 +6,11 @@ from datetime import datetime, timezone
 
 from app.db.session import get_db
 from app.models.user import User
+from app.models.account import Account
 from app.schemas.user import UserResponse, AccountResponse
 from app.services.auth import oauth, get_current_user_from_session
-from app.models.account import Account
 from app.core.config import settings
+from app.api.endpoints.emails import background_sync_emails
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -34,11 +35,11 @@ async def callback(request: Request, background_tasks: BackgroundTasks, db: Asyn
         # Get the token from Google
         token = await oauth.google.authorize_access_token(request)
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"OAuth failure: {str(e)}")
+        return RedirectResponse(url=f"{settings.FRONTEND_URL}/?error=oauth_failure&detail={str(e)}")
         
     user_info = token.get("userinfo")
     if not user_info:
-        raise HTTPException(status_code=400, detail="Failed to get user info from Google")
+        return RedirectResponse(url=f"{settings.FRONTEND_URL}/?error=user_info_failure")
         
     google_id = user_info.get("sub")
     email = user_info.get("email")
@@ -55,7 +56,6 @@ async def callback(request: Request, background_tasks: BackgroundTasks, db: Asyn
         token_expiry = datetime.fromtimestamp(expires_at, tz=timezone.utc)
 
     # Check if this Account already exists
-    from app.models.account import Account
     stmt_acc = select(Account).where(Account.google_id == google_id)
     account = (await db.execute(stmt_acc)).scalar_one_or_none()
     
@@ -112,7 +112,6 @@ async def callback(request: Request, background_tasks: BackgroundTasks, db: Asyn
     await db.commit()
     await db.refresh(account)
     
-    from app.api.endpoints.emails import background_sync_emails
     background_tasks.add_task(background_sync_emails, account.id)
     
     # Set session

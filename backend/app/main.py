@@ -31,20 +31,23 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Set security flags based on environment
+is_local = settings.APP_DOMAIN == "localhost"
+
 # Add Session Middleware for OAuth state and internal auth
 app.add_middleware(
     SessionMiddleware,
     secret_key=settings.SECRET_KEY,
     session_cookie="decamp_session",
     max_age=14 * 24 * 60 * 60,  # 14 days
-    same_site="none",
-    https_only=True,
+    same_site="lax" if is_local else "none",
+    https_only=not is_local,
 )
 
 # Add CORS Middleware to allow requests from the Next.js frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origin_regex=r"https://.*\.vercel\.app|https://.*\.onrender\.com|https://.*\.binbyte\.dev|http://localhost:3000",
+    allow_origin_regex=r"https://.*\.vercel\.app|https://.*\.onrender\.com|https://.*\.binbyte\.dev|http://localhost:3000|http://127.0.0.1:3000",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["Content-Type", "Authorization", "X-Account-Id", "X-Requested-With"],

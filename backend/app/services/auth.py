@@ -41,16 +41,11 @@ async def get_active_account(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user_from_session)
 ) -> Account:
-    # 1. Fetch all accounts for this user for debug and fallback
+    # 1. Fetch all accounts for this user
     stmt_all = select(Account).where(Account.user_id == current_user.id)
     all_accounts = (await db.execute(stmt_all)).scalars().all()
     
-    print(f"\n--- [DEBUG] Auth Resolution ---")
-    print(f"Req.user (ID): {current_user.id} ({current_user.email})")
-    print(f"Req.user.accounts: {[acc.id for acc in all_accounts]}")
-
     if not all_accounts:
-        print("No accounts found for user!")
         raise HTTPException(status_code=401, detail="No connected accounts found")
 
     account = None
@@ -67,16 +62,8 @@ async def get_active_account(
     if not account:
         account = all_accounts[0]
 
-    # Mask token for logging
-    token_str = account.access_token if account.access_token else ""
-    masked_token = f"{token_str[:4]}...{token_str[-4:]}" if len(token_str) > 8 else "MISSING"
-    print(f"Selected Account: {account.id} ({account.email})")
-    print(f"Access Token: {masked_token}")
-    print(f"-------------------------------\n")
-
-    # 2. Validate token
+    # 2. Validate token presence
     if not account.access_token:
-        print("Error: Account is missing access token.")
         raise HTTPException(status_code=400, detail="Account is missing access token")
         
     return account

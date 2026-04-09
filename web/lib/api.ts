@@ -2,7 +2,11 @@
  * Centralized API utility to handle fetches with account context.
  */
 
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://decamp-m.onrender.com";
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
+
+if (!API_BASE_URL && typeof window !== "undefined") {
+  console.warn("NEXT_PUBLIC_API_URL is not defined. API calls may fail or point to the wrong origin.");
+}
 
 export async function apiFetch(endpoint: string, options: RequestInit = {}) {
   const activeAccountId = typeof window !== "undefined" ? localStorage.getItem("activeAccountId") : null;

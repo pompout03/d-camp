@@ -5,6 +5,7 @@ import { Zap } from "lucide-react";
 import Link from "next/link";
 import NavbarDesktop from "./NavbarDesktop";
 import NavbarMobile from "./NavbarMobile";
+import { API_BASE_URL } from "@/lib/api";
 
 export const navLinks = [
   { label: "Features", href: "#features" },
@@ -98,7 +99,7 @@ export default function Navbar() {
         {/* CTA */}
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
           <a
-            href={`${process.env.NEXT_PUBLIC_API_URL || "https://decamp-m.onrender.com"}/auth/login`}
+            href={`${API_BASE_URL}/auth/login`}
             className="btn-secondary hide-mobile"
             style={{ padding: "9px 20px", fontSize: "0.85rem" }}
           >
